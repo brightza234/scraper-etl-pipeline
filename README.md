@@ -1,5 +1,7 @@
 # Scraper + ETL Pipeline
 
+**[Live demo →](https://scraper-etl-pipeline.vercel.app)**
+
 A self-written scraper (no official API) feeding a scheduled ETL pipeline into SQLite, with a
 Next.js dashboard on top. Target: Wikipedia's [List of most-subscribed YouTube
 channels](https://en.wikipedia.org/wiki/List_of_most-subscribed_YouTube_channels).

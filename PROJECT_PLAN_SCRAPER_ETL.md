@@ -25,10 +25,11 @@ cross-check)
 **ห้าม scrape:** เว็บพาณิชย์ที่ระบุห้าม scraping ชัดเจนใน ToS (LinkedIn, JobsDB, Indeed
 ส่วนใหญ่ห้าม) — ความเสี่ยงทางกฎหมายไม่คุ้มกับ portfolio project
 
-- [ ] เลือก target website ที่จะ scrape
-- [ ] **เช็ค `robots.txt` ของเว็บนั้นก่อนเริ่ม** (เช่น เปิด `[เว็บ]/robots.txt` ดูว่า path ที่จะ
-      scrape ถูกห้ามไหม)
-- [ ] อ่าน Terms of Service คร่าว ๆ เพื่อยืนยันว่าไม่ขัดกับนโยบายเว็บ
+- [x] เลือก target website ที่จะ scrape — Wikipedia "List of most-subscribed YouTube channels"
+- [x] **เช็ค `robots.txt` ของเว็บนั้นก่อนเริ่ม** — เช็คด้วยมือก่อนเริ่ม และยังเช็คซ้ำทุกครั้งที่รัน
+      จริงใน `scraper/extract.py` (`check_robots_txt`, ใช้ `urllib.robotparser`)
+- [x] อ่าน Terms of Service คร่าว ๆ เพื่อยืนยันว่าไม่ขัดกับนโยบายเว็บ — เนื้อหา Wikipedia อยู่ภายใต้
+      CC BY-SA, การดึงหน้าสาธารณะแบบมี rate limit ไม่ขัดนโยบาย
 
 ---
 
@@ -46,29 +47,29 @@ cross-check)
 
 ## Scraper Engineering Checklist (จุดที่ทำให้โปรเจคนี้ดูมืออาชีพ)
 
-- [ ] ตั้ง `User-Agent` header ที่ระบุตัวตนชัดเจน (ไม่ปลอมเป็น browser จริงเพื่อหลบเลี่ยงการตรวจจับ)
-- [ ] ใส่ `time.sleep()` หน่วงระหว่าง request แต่ละครั้ง (rate limiting ด้วยตัวเอง ไม่ยิงรัว ๆ)
-- [ ] ทำ error handling: try/except รอบทุก request, retry with exponential backoff ถ้า request
+- [x] ตั้ง `User-Agent` header ที่ระบุตัวตนชัดเจน (ไม่ปลอมเป็น browser จริงเพื่อหลบเลี่ยงการตรวจจับ)
+- [x] ใส่ `time.sleep()` หน่วงระหว่าง request แต่ละครั้ง (rate limiting ด้วยตัวเอง ไม่ยิงรัว ๆ)
+- [x] ทำ error handling: try/except รอบทุก request, retry with exponential backoff ถ้า request
       ล้มเหลว
-- [ ] เขียน parser ให้ทนทานต่อการเปลี่ยนแปลงโครงสร้างหน้าเว็บบ้าง (เช่น เช็คว่า element ที่หาเจอ
+- [x] เขียน parser ให้ทนทานต่อการเปลี่ยนแปลงโครงสร้างหน้าเว็บบ้าง (เช่น เช็คว่า element ที่หาเจอ
       ไหมก่อนดึงค่า ไม่ crash ถ้าโครงสร้างเปลี่ยนเล็กน้อย)
-- [ ] Cache raw HTML ที่ดึงมาไว้ก่อน (กันกรณีต้อง parse ใหม่โดยไม่ต้องยิง request ซ้ำ)
+- [x] Cache raw HTML ที่ดึงมาไว้ก่อน (กันกรณีต้อง parse ใหม่โดยไม่ต้องยิง request ซ้ำ)
 
 ---
 
 ## ETL Pipeline
 
 ### Extract
-- [ ] เขียน `scraper/extract.py` — ดึงหน้า HTML ตาม checklist ด้านบน เก็บ raw HTML ไว้ใน
+- [x] เขียน `scraper/extract.py` — ดึงหน้า HTML ตาม checklist ด้านบน เก็บ raw HTML ไว้ใน
       `data/raw_html/`
 
 ### Transform
-- [ ] เขียน `scraper/transform.py` — parse HTML ด้วย BeautifulSoup, clean text (ตัด whitespace,
+- [x] เขียน `scraper/transform.py` — parse HTML ด้วย BeautifulSoup, clean text (ตัด whitespace,
       แปลง HTML entity), แปลง string ตัวเลขเป็น int/float, ตรวจ/ตัดข้อมูลซ้ำ
 
 ### Load
-- [ ] เขียน `scraper/load.py` — insert ข้อมูลที่ clean แล้วเข้า SQLite (`data/scraped.db`)
-      ออกแบบ schema ให้เหมาะกับการ query ภายหลัง (เช่น ตาราง `entries` พร้อม `scraped_at`
+- [x] เขียน `scraper/load.py` — insert ข้อมูลที่ clean แล้วเข้า SQLite (`data/scraped.db`)
+      ออกแบบ schema ให้เหมาะกับการ query ภายหลัง (ตาราง `channels` พร้อม `scraped_at`
       timestamp เพื่อ track การเปลี่ยนแปลงข้ามเวลา)
 
 ---
@@ -76,26 +77,29 @@ cross-check)
 ## แผนพัฒนา (Phases)
 
 ### Phase 0 — Setup
-- [ ] เลือก target website, เช็ค robots.txt/ToS
-- [ ] Repo ใหม่: `npx create-next-app@latest scraper-etl-pipeline --tailwind --app`
+- [x] เลือก target website, เช็ค robots.txt/ToS
+- [x] Repo ใหม่: `npx create-next-app@latest scraper-etl-pipeline --tailwind --app`
 
 ### Phase 1 — Scraper Development
-- [ ] เขียน extract → transform → load ตามลำดับ
-- [ ] ทดสอบรันครั้งแรก ตรวจสอบว่าข้อมูลที่ได้ถูกต้องครบถ้วน
+- [x] เขียน extract → transform → load ตามลำดับ
+- [x] ทดสอบรันครั้งแรก ตรวจสอบว่าข้อมูลที่ได้ถูกต้องครบถ้วน — 100/100 channels parsed คลีน
+      (แก้ bug เดียวที่เจอ: รูปแบบวันที่ย่อ "Jun 21, 2012" ที่ `%B %d, %Y` parse ไม่ผ่าน)
 
 ### Phase 2 — Automation
-- [ ] ตั้ง GitHub Actions workflow ให้รัน scraper ตามตารางเวลา (เช่น ทุกวัน) commit ข้อมูลใหม่
-      เข้า repo อัตโนมัติ
+- [x] ตั้ง GitHub Actions workflow ให้รัน scraper ตามตารางเวลา (ทุกวัน 03:00 UTC) commit ข้อมูลใหม่
+      เข้า repo อัตโนมัติ — ทดสอบรันจริงผ่าน `workflow_dispatch` แล้ว, commit สำเร็จ
 
 ### Phase 3 — Dashboard (Next.js)
-- [ ] อ่านข้อมูลจาก SQLite แสดงเป็นตาราง/chart
-- [ ] (ถ้ามีข้อมูลสะสมหลายวัน) แสดง trend การเปลี่ยนแปลงของข้อมูลข้ามเวลา
+- [x] อ่านข้อมูลจาก SQLite แสดงเป็นตาราง/chart — หน้า Overview (ranking table + category chart)
+- [x] (ถ้ามีข้อมูลสะสมหลายวัน) แสดง trend การเปลี่ยนแปลงของข้อมูลข้ามเวลา — หน้า Trend, มี empty
+      state ถ้ายังมีแค่ 1 snapshot
 
 ### Phase 4 — Deploy
-- [ ] Push GitHub, เชื่อม Vercel, ตั้งค่า env vars (ถ้ามี)
+- [x] Push GitHub ([brightza234/scraper-etl-pipeline](https://github.com/brightza234/scraper-etl-pipeline)),
+      เชื่อม Vercel (auto-deploy on push), ไม่มี env vars ที่ต้องตั้ง
 
 ### Phase 5 — Polish
-- [ ] README: อธิบาย scraping ethics ที่ทำตาม (robots.txt check, rate limiting, User-Agent)
+- [x] README: อธิบาย scraping ethics ที่ทำตาม (robots.txt check, rate limiting, User-Agent)
       + ทำไมเลือก SQLite แทน JSON + "What this demonstrates"
 
 ---
