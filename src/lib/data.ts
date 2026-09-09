@@ -94,14 +94,23 @@ export function getCategoryBreakdown(scrapedAt: string): CategoryBreakdown[] {
   }));
 }
 
-export function getSubscriberTrend(name: string): SubscriberTrendPoint[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT scraped_at, subscribers
-       FROM channels
-       WHERE name = ? AND subscribers IS NOT NULL
-       ORDER BY scraped_at ASC`
-    )
-    .all(name) as { scraped_at: string; subscribers: number }[];
+export function getSubscriberTrend(name: string, sinceIso?: string): SubscriberTrendPoint[] {
+  const rows = sinceIso
+    ? (getDb()
+        .prepare(
+          `SELECT scraped_at, subscribers
+           FROM channels
+           WHERE name = ? AND subscribers IS NOT NULL AND scraped_at >= ?
+           ORDER BY scraped_at ASC`
+        )
+        .all(name, sinceIso) as { scraped_at: string; subscribers: number }[])
+    : (getDb()
+        .prepare(
+          `SELECT scraped_at, subscribers
+           FROM channels
+           WHERE name = ? AND subscribers IS NOT NULL
+           ORDER BY scraped_at ASC`
+        )
+        .all(name) as { scraped_at: string; subscribers: number }[]);
   return rows.map((r) => ({ scrapedAt: r.scraped_at, subscribers: r.subscribers }));
 }

@@ -1,8 +1,17 @@
-import ChannelSelect from "@/components/ChannelSelect";
 import EmptyState from "@/components/EmptyState";
 import Nav from "@/components/Nav";
 import SubscriberTrendChart from "@/components/SubscriberTrendChart";
+import TrendControls from "@/components/TrendControls";
 import { getAllSnapshots, getChannelsForSnapshot, getLatestScrapedAt, getSubscriberTrend } from "@/lib/data";
+import { RANGE_OPTIONS } from "@/lib/trendRanges";
+
+function sinceIsoForRange(range: string): string | undefined {
+  const opt = RANGE_OPTIONS.find((o) => o.value === range);
+  if (!opt || opt.days === null) return undefined;
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - opt.days);
+  return since.toISOString();
+}
 
 export default async function TrendPage(props: PageProps<"/trend">) {
   const scrapedAt = getLatestScrapedAt();
@@ -22,9 +31,12 @@ export default async function TrendPage(props: PageProps<"/trend">) {
 
   const searchParams = await props.searchParams;
   const requestedChannel = typeof searchParams.channel === "string" ? searchParams.channel : undefined;
-  const selected = requestedChannel && names.includes(requestedChannel) ? requestedChannel : names[0];
+  const selectedChannel = requestedChannel && names.includes(requestedChannel) ? requestedChannel : names[0];
 
-  const trend = getSubscriberTrend(selected);
+  const requestedRange = typeof searchParams.range === "string" ? searchParams.range : undefined;
+  const selectedRange = RANGE_OPTIONS.some((o) => o.value === requestedRange) ? requestedRange! : "all";
+
+  const trend = getSubscriberTrend(selectedChannel, sinceIsoForRange(selectedRange));
 
   return (
     <>
@@ -37,7 +49,7 @@ export default async function TrendPage(props: PageProps<"/trend">) {
           </p>
         </div>
 
-        <ChannelSelect names={names} selected={selected} />
+        <TrendControls names={names} selectedChannel={selectedChannel} selectedRange={selectedRange} />
 
         {snapshots.length < 2 ? (
           <div className="rounded-lg border border-dashed border-black/15 dark:border-white/15 p-8 text-center">
@@ -46,6 +58,13 @@ export default async function TrendPage(props: PageProps<"/trend">) {
               The scheduled scrape (see <code>.github/workflows/scrape.yml</code>) runs daily and
               commits a new snapshot each time. Trend lines will appear once a few days of data
               have accumulated.
+            </p>
+          </div>
+        ) : trend.length < 2 ? (
+          <div className="rounded-lg border border-dashed border-black/15 dark:border-white/15 p-8 text-center">
+            <h2 className="text-lg font-medium">No data in this range</h2>
+            <p className="mt-2 text-sm text-foreground/60">
+              There isn&apos;t enough history in the selected range yet. Try a wider range.
             </p>
           </div>
         ) : (
